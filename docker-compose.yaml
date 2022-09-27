@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  mydb:
+    image: mariadb:10.2
+    environment:
+      - MARIADB_ROOT_PASSWORD=1234
+      - MARIADB_DATABASE=movie
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8
+      - --collation-server=utf8_general_ci
+    networks:
+      back-net:
+  myapp:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mydb:3306/movie?useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SERVER_PORT: 8080
+      expose: 8080
+    depends_on:
+      - mydb
+    restart: always
+    networks:
+      - back-net
+      - front-net
+  myweb:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      API_IP: myapp:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - myapp
+    restart: always
+    networks:
+      - front-net
+networks:
+  back-net: {}
+  front-net: {}
+
